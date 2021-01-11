@@ -3,11 +3,15 @@ import {API_URL, API_KEY} from "../config";
 import Preloader from "./Preloader";
 import GoodsList from "./Goods";
 import Cart from "./Cart";
+import BasketList from "./BasketList";
+import Alert from "./Alert";
 
 function Shop() {
     const [goods, setGoods] = useState([])
     const [loading, setLoading] = useState(true)
     const [order, setOrder] = useState([])
+    const [isBasketShow, setIsBasketShow] = useState(false)
+    const [alertName, setAlertName] = useState('')
 
     const addToBasket = (item) => {
         const itemIndex = order.findIndex(orderItem => orderItem.id === item.id)
@@ -32,9 +36,55 @@ function Shop() {
             })
             setOrder(newOrder)
         }
-
+            setAlertName(item.name)
 
     }
+
+    const handleBasketShow = () => {
+        setIsBasketShow(!isBasketShow)
+    }
+
+    const removeFromBasket = (itemId) => {
+         const newOrder = order.filter((item) => (item.id !== itemId))
+        setOrder(newOrder)
+    }
+
+    const incQuantity = (itemId) => {
+        const newOrder = order.map((el) => {
+
+                if(el.id === itemId){
+                    const newQuantity = el.quantity + 1
+                    return {
+                        ...el,
+                        quantity: newQuantity
+                    }
+                }else {
+                    return el
+                }
+
+        })
+        setOrder(newOrder)
+    }
+    const decQuantity = (itemId) => {
+        const newOrder = order.map((el) => {
+
+            if(el.id === itemId){
+                const newQuantity = el.quantity - 1
+                return {
+                    ...el,
+                    quantity: newQuantity >= 0? newQuantity: 0
+                }
+            }else {
+                return el
+            }
+
+        })
+        setOrder(newOrder)
+    }
+    const closeAlert = () => {
+        setAlertName('')
+    }
+
 
     useEffect(()=> {
         fetch(API_URL, {
@@ -54,8 +104,16 @@ function Shop() {
 
     return (
         <main className="container content">
-            <Cart quantity={order.length}/>
+            <Cart quantity={order.length} handleBasketShow={handleBasketShow}/>
             {loading ? <Preloader/>: <GoodsList goods={goods} addToBasket={addToBasket}/>}
+            {isBasketShow ? <BasketList
+                order={order}
+                handleBasketShow={handleBasketShow}
+                removeFromBasket={removeFromBasket}
+                incQuantity={incQuantity}
+                decQuantity={decQuantity}
+            />: null}
+            {alertName && <Alert name={alertName} closeAlert={closeAlert}/>}
         </main>
     )
 }
